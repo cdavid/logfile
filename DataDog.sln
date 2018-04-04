@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27520.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogReader", "src\LogReader\LogReader.csproj", "{44735DB4-E9E3-4011-9733-0015FF76FD43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogWriter", "src\LogWriter\LogWriter.csproj", "{04A83BF4-0D63-48DC-863E-5F64ABAA0F5E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "src\Shared\Shared.csproj", "{09E219A3-0F70-47B3-9B63-9AE49A9F1403}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{44735DB4-E9E3-4011-9733-0015FF76FD43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44735DB4-E9E3-4011-9733-0015FF76FD43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44735DB4-E9E3-4011-9733-0015FF76FD43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44735DB4-E9E3-4011-9733-0015FF76FD43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04A83BF4-0D63-48DC-863E-5F64ABAA0F5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04A83BF4-0D63-48DC-863E-5F64ABAA0F5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04A83BF4-0D63-48DC-863E-5F64ABAA0F5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04A83BF4-0D63-48DC-863E-5F64ABAA0F5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09E219A3-0F70-47B3-9B63-9AE49A9F1403}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09E219A3-0F70-47B3-9B63-9AE49A9F1403}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09E219A3-0F70-47B3-9B63-9AE49A9F1403}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09E219A3-0F70-47B3-9B63-9AE49A9F1403}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {17126641-2D1F-4E24-AFA1-C485672DF417}
+	EndGlobalSection
+EndGlobal
