@@ -43,6 +43,8 @@ namespace LogReader
             // * I try to use interfaces in most places as that makes it easy to unit test different components and mock out everything else.
             // * In production, we would use Dependency Injection (DI) to construct the objects and their dependencies, but I decided to not
             //   use that here (here we instantiate the objects manually).
+            // * There are very many tests missing. So far, I have added one because RegEx-s scare me and I wanted to make sure that
+            //   I got it right.
             //
             // The structure of this project is as follows:
             // * we have a reader flow (Task) that run continuously - this reads the file and generates the necessary data.
@@ -70,30 +72,52 @@ namespace LogReader
             CancellationTokenSource cts = new CancellationTokenSource();
 
             ILogParser logParser = new CommonLogParser();
+            IReportGenerator reportGenerator = new TenSecondTwoMinuteReportGenerator();
 
+            // Setting up the TPL Dataflow
             var bufferBlock = new BufferBlock<Tuple<string, DateTime>>();
-
             var transformBlock = new TransformBlock<Tuple<string, DateTime>, LogEntity>(input =>
             {
                 return logParser.Parse(input.Item1, input.Item2);
             });
-            bufferBlock.LinkTo(transformBlock); // we chain the buffer block to the transform block
-
             var actionBlock = new ActionBlock<LogEntity>(input =>
             {
-
+                reportGenerator.AddLogItem(input);
             });
+            bufferBlock.LinkTo(transformBlock); // we chain the buffer block to the transform block
             transformBlock.LinkTo(actionBlock); // we chain the transform block to the action block
+            // Done setting up TPL
 
-            IFileReader fr = new FileReader(LogSettings.FILE_PATH, bufferBlock);
+            IFileReader fileReader = new FileReader(LogSettings.FILE_PATH, bufferBlock);
 
 
-            await fr.StartReadAsync(cts.Token);
-        }
+            Task readingTask = fileReader.StartReadAsync(cts.Token);
+            Task reportingTask = reportGenerator.StartPeriodicReportingAsync(cts.Token);
 
-        private static Tuple<LogEntity, DateTime> TransformMethod(Tuple<string, DateTime> input)
-        {
-            throw new NotImplementedException();
+
+            bool toContinue = true;
+            Console.WriteLine("Press x or X to eXit");
+            while (toContinue)
+            {
+                var key = Console.ReadKey();
+                switch (key.KeyChar)
+                {
+                    case 'x':
+                    case 'X':
+                        toContinue = false;
+                        cts.Cancel();
+                        Console.WriteLine("Cancelled the tasks...");
+                        break;
+                }
+            }
+
+            try
+            {
+                await Task.WhenAll(readingTask, reportingTask);
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

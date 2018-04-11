@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Shared;
 
 namespace LogReader.Interfaces
 {
@@ -10,10 +11,14 @@ namespace LogReader.Interfaces
     /// </summary>
     public interface IReportGenerator
     {
-        void AddLogItem();
+        void AddLogItem(LogEntity logEntity);
 
-        void GenerateSummaryReport();
+        void GenerateSummaryReport(DateTime previousInterval, DateTime timeNow);
 
-        void GenerateAlertReport();
+        void GenerateAlertReport(DateTime previousInterval, DateTime timeNow);
+
+        void GenerateAllReports(DateTime previousInterval, DateTime timeNow);
+
+        Task StartPeriodicReportingAsync(CancellationToken ct);
     }
 }
