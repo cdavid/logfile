@@ -12,11 +12,14 @@ namespace Shared
         public string ClientIdentity { get; set; }
         public string UserId { get; set; }
         public DateTime Time { get; set; }
-        public string HttpMethod { get; set; } /* we want to allow for custom method names here, so we leave it as string */
+        public string HttpMethod { get; set; } /* we want to allow for custom HTTP method names here, so we leave it as string */
         public string HttpPath { get; set; }
         public string HttpVersion { get; set; }
         public HttpStatusCode StatusCode { get; set; }
         public int ResponseSize { get; set; }
+
+        // We also want to keep track of when the log item was read from the file
+        public DateTime TimeReadFromFile { get; set; }
 
         public override string ToString()
         {

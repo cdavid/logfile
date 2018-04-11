@@ -51,6 +51,7 @@ namespace LogWriter
 
                         var log = logEntityFactory.GetRandomLogEntity();
                         await writer.WriteLineAsync(log.ToString());
+                        await writer.FlushAsync();
 
                         // Do we need to stop?
                         if (!ct.IsCancellationRequested)
@@ -91,7 +92,7 @@ namespace LogWriter
                         break;
                     case 'x':
                     case 'X':
-                        // Quit
+                        // eXit :)
                         cts.Cancel();
                         shouldContinue = false;
                         break;

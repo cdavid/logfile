@@ -24,8 +24,11 @@ namespace Shared
             _httpMethods = new List<string> { "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" };
             _knownPaths = new List<string>
             {
-                "/api/v1/Customers", "/api/v1/Orders", "/api/v1/Invoices", "/api/v1/Users", "/api/v1/Products",
-                "/api/v2/Customers", "/api/v2/Orders", "/api/v2/Invoices", "/api/v2/Users", "/api/v2/Products",
+                "/v1/Customers", "/v1/Orders", "/v1/Invoices", "/v1/Users", "/v1/Products",
+                "/v2/Customers", "/v2/Orders", "/v2/Invoices", "/v2/Users", "/v2/Products",
+                "/v3/Customers", "/v3/Orders", "/v3/Invoices", "/v3/Users", "/v3/Products",
+                "/v4/Customers", "/v4/Orders", "/v4/Invoices", "/v4/Users", "/v4/Products",
+                "/v5/Customers", "/v5/Orders", "/v5/Invoices", "/v5/Users", "/v5/Products",
             };
         }
 
@@ -98,12 +101,6 @@ namespace Shared
                 StatusCode = code,
                 ResponseSize = 256
             };
-        }
-
-        public LogEntity ParseLogEntity(string input)
-        {
-            // TODO: parse a log line to an entity
-            return null;
         }
     }
 }
