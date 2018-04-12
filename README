@@ -1,1 +1,35 @@
 The main entry point for this project and most of the documentation is under src\LogReader\Program.cs.
+
+To run the LogReader, use dotnet run from within that folder (requires that ~\datadog\file.log exists).
+To run the LogWriter, use dotnet run from within that folder (will generate ~\datadog\file.log and add logs to it).
+To run the unit tests, use dotnet test from within that folder.
+
+All of dotnet run / test will first download the necessary dependencies (restore), then build, then run/test.
+
+
+How to improve the current application (in no particular order):
+* Make it more extensible - right now, many things are hardcoded (e.g.: paths, intervals for the 2min / 10 second,
+    where to send the alerts). This can be achieved via a configuration file (.NET uses an appsettings.json file for this).
+* Make it work with arbitrary data - today, I skip over the existing contents of the file. Ideally, you should be able
+    to even give the program a file and a time range (or line numbers inside the file) and it would tell you if an alert
+    was triggered or not in that time frame and what the status of the system is.
+* Track more metrics - today we only use the path and the status code.
+    a) In an ideal world, there would be also correlations such that we can track the flows of the users and extract
+    business data (what do users do?).
+    b) In an ideal world, we could also use this to infer metrics regarding the status of the API (suddenly, there is a flurry of 500)
+* Track and improve performance / functionality: we take some shortcuts today that need to be fixed:
+    a) we use regular expressions when parsing the string to an internal object (that is potentially expensive).
+    b) we use an inefficient way to read the logs from the file (we rely on reading full log lines) that adds overhead.
+    c) today, in the 10 second queue, we keep the entire object in memory - that is not needed if we only use two fields of it
+        to compute metrics.
+    d) we should have performance tests on how long it takes for each step of the process (read, parse, compute) and what are the
+        resources needed (CPU/memory) for those operations.
+* Add a lot more unit tests, also targeting for corner cases:
+    a) test functionality of the monitoring mechanism (the 10 second)
+    b) test the functionality of the file reader.
+    c) corner cases - probably many more, but: today, if you remove lines from the log file while the LogReader is running,
+        it gets very confused, as it does not know where to read from and does not read any more (requires application restart).
+* Replace the "alerting" part with an IAlerter interface that can be routed to any other "sink" besides the Logger asynchronously
+    (e.g.: PagerDuty). The interface would contain more information regarding the alert as well.
+* Replace the "10 second summary" generator with an ISummary interface that can generate the data in a readable format for
+    visualization tools (e.g.: output something that can be plotted from D3.js or plotly).
