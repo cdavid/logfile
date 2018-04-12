@@ -7,6 +7,7 @@ using LogReader.Interfaces;
 using Shared;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace LogReader.Implementations
 {
@@ -31,11 +32,13 @@ namespace LogReader.Implementations
 
         private readonly ConcurrentQueue<DateTime> twoMinQueue;
         private readonly ConcurrentQueue<LogEntity> tenSecondQueue;
+        private readonly ILogger _logger;
 
         public TenSecondTwoMinuteReportGenerator()
         {
             tenSecondQueue = new ConcurrentQueue<LogEntity>();
             twoMinQueue = new ConcurrentQueue<DateTime>();
+            _logger = Program.LoggerFactory.CreateLogger<TenSecondTwoMinuteReportGenerator>();
         }
 
         /// <summary>
@@ -120,15 +123,15 @@ namespace LogReader.Implementations
 
             count = elementsToSkip + newElements;
 
-            //Console.WriteLine($"AAAAAAA: Queue={twoMinQueue.Count} prevCount={previousTwoMinuteElementCount}\r\n" +
-            //    $"removed={elementsRemoved} new={newElements}\r\n" +
-            //    $"prevInterval={previousInterval}, current={timeMax}\r\n");
+            _logger.LogTrace($"Queue={twoMinQueue.Count} prevCount={previousTwoMinuteElementCount}\r\n" +
+                $"removed={elementsRemoved} new={newElements}\r\n" +
+                $"prevInterval={previousInterval}, current={timeMax}\r\n");
 
             previousTwoMinuteElementCount = count;
 
             if (count > ALERT_NUMBER)
             {
-                Console.WriteLine(
+                _logger.LogCritical(
                     "===============================\r\n" +
                     "| ALERT ALERT ALERT!!!        |\r\n" +
                     "| Events in past 2 mins: {0,5}|\r\n" +
@@ -152,6 +155,7 @@ namespace LogReader.Implementations
             // is in fact arbitrary).
 
             bool shouldContinue = true;
+            int parsedItems = 0;
 
             Dictionary<string, int> paths = new Dictionary<string, int>();
             Dictionary<HttpStatusCode, int> statusCodes = new Dictionary<HttpStatusCode, int>();
@@ -183,23 +187,24 @@ namespace LogReader.Implementations
                         {
                             if (longRunningItem.TimeReadFromFile - longRunningItem.Time > TimeSpan.FromSeconds(tenSecondInterval))
                             {
-                                Console.WriteLine($"WRN: Log item has Time {longRunningItem.Time},"
-                                    + $" but was processed at {longRunningItem.TimeReadFromFile}");
+                                _logger.LogWarning($"Log item has Time {longRunningItem.Time}, but was processed at {longRunningItem.TimeReadFromFile}");
                             }
                         }
                         else
                         {
-                            // Something has gone terribly wrong, the element was there just now, we peeked at it??
+                            _logger.LogCritical("Something has gone terribly wrong, the element was there just now, we peeked at it??");
                         }
                     }
                     else
                     {
                         if (logItem.Time < timeMax)
                         {
+                            parsedItems++;
                             // Elements we are interested in.
                             if (tenSecondQueue.TryDequeue(out LogEntity currentItem))
                             {
-                                // paths
+                                // Here we can do any parsing logic that we want.
+                                // we parse the paths
                                 var segments = currentItem.HttpPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
                                 if (segments.Length > 0)
                                 {
@@ -207,18 +212,18 @@ namespace LogReader.Implementations
                                 }
                                 else
                                 {
-                                    paths.TryIncrementOrAdd("none");
+                                    paths.TryIncrementOrAdd("/");
                                 }
 
                                 // Status codes
-                                if ((int)currentItem.StatusCode >= 400 || (int)currentItem.StatusCode < 600)
+                                if ((int)currentItem.StatusCode >= 400 && (int)currentItem.StatusCode < 600)
                                 {
                                     statusCodes.TryIncrementOrAdd(currentItem.StatusCode);
                                 }
                             }
                             else
                             {
-                                // Something has gone terribly wrong, the element was there just now, we peeked at it??
+                                _logger.LogCritical("Something has gone terribly wrong, the element was there just now, we peeked at it??");
                             }
                         }
                         else
@@ -235,14 +240,17 @@ namespace LogReader.Implementations
                 }
             }
 
+            _logger.LogInformation($"Read {parsedItems} log lines in the interval {previousInterval} to {timeMax}");
+
             if (paths.Count > 0)
             {
-                Console.WriteLine(
+                string toOutput = string.Empty;
+                toOutput += 
                     "Requests by Path:      " +
                     "=======================\r\n" +
                     Padding + "| Item | Path | Count |\r\n" +
-                    Padding + "======================="
-                    );
+                    Padding + "=======================\r\n"
+                    ;
 
                 var sortedPaths = from entry in paths
                                   orderby entry.Value descending
@@ -251,19 +259,22 @@ namespace LogReader.Implementations
                 for (int i = 0; i < Math.Min(paths.Count, 3); i++)
                 {
                     var item = sortedPaths.ElementAt(i);
-                    Console.WriteLine(Padding + "| {0,4} | {1,4} | {2,5} |", i, item.Key, item.Value);
+                    toOutput += string.Format(Padding + "| {0,4} | {1,4} | {2,5} |\r\n", i, item.Key, item.Value);
                 }
-                Console.WriteLine(Padding + "=======================");
+                toOutput += Padding + "=======================";
+
+                _logger.LogInformation(toOutput);
             }
 
             if (statusCodes.Count > 0)
             {
-                Console.WriteLine(
+                string toOutput = string.Empty;
+                toOutput +=
                     "BAD STATUS CODES:      " +
                     "=======================\r\n" +
                     Padding + "| Item | Code | Count |\r\n" +
-                    Padding + "======================="
-                    );
+                    Padding + "=======================\r\n"
+                    ;
 
                 var sortedCodes = from entry in statusCodes
                                   orderby entry.Value descending
@@ -272,13 +283,15 @@ namespace LogReader.Implementations
                 for (int i = 0; i < statusCodes.Count; i++)
                 {
                     var item = sortedCodes.ElementAt(i);
-                    Console.WriteLine(Padding + "| {0,4} | {1,4} | {2,5} |", i, item.Key, item.Value);
+                    toOutput += string.Format(Padding + "| {0,4} | {1,4} | {2,5} |\r\n", i, (int)item.Key, item.Value);
                 }
-                Console.WriteLine(Padding + "=======================");
+                toOutput += Padding + "=======================";
+
+                _logger.LogInformation(toOutput);
             }
             else
             {
-                Console.WriteLine("No bad status codes...");
+                _logger.LogInformation("No bad status codes in this interval...");
             }
         }
 
@@ -319,7 +332,7 @@ namespace LogReader.Implementations
                     // Task.Delay checks if the delay is 0 and then continues the execution.
                 }
 
-                await Task.Delay(timeToSleep, ct);
+                await Task.Delay(timeToSleep, ct).ConfigureAwait(false);
                 DateTime timeNow = DateTime.UtcNow;
 
                 // We do the reporting

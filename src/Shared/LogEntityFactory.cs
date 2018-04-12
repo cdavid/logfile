@@ -86,7 +86,7 @@ namespace Shared
             // * 10% goes to 404s
             var path = _random.Next(100) < 90 ?
                 _knownPaths[_random.Next(_knownPaths.Count - 1)] :
-                "/xyzSPAMxyz";
+                "/SPAM";
                 
 
             return new LogEntity
@@ -94,7 +94,7 @@ namespace Shared
                 IpAddress = ipAddress,
                 ClientIdentity = "-",
                 UserId = user,
-                Time = DateTime.Now,
+                Time = DateTime.UtcNow,
                 HttpMethod = httpMethod,
                 HttpPath = path,
                 HttpVersion = "1.0",

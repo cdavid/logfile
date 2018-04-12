@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using LogReader.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace LogReader.Implementations
 {
@@ -12,6 +13,7 @@ namespace LogReader.Implementations
         private readonly string _fileName;
         private readonly BufferBlock<Tuple<string, DateTime>> _destinationBlock;
         private readonly SemaphoreSlim trigger;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// A reader that tries to read as fast as possible and that
@@ -35,6 +37,7 @@ namespace LogReader.Implementations
             }
 
             trigger = new SemaphoreSlim(0, 1);
+            _logger = Program.LoggerFactory.CreateLogger<FileReader>();
         }
 
         public async Task StartReadAsync(CancellationToken ct)
@@ -66,7 +69,6 @@ namespace LogReader.Implementations
                 while (readLine != null)
                 {
                     readLine = await sr.ReadLineAsync();
-                    // Console.WriteLine(readLine); // Debug
                 }
 
                 // We make use here of a FileSystemWatcher that will signal us (via the trigger)
@@ -78,7 +80,19 @@ namespace LogReader.Implementations
                 };
                 fileSystemWatcher.Changed += (s, e) =>
                 {
-                    trigger.Release();
+                    try
+                    {
+                        if (!ct.IsCancellationRequested && trigger.CurrentCount == 0)
+                        {
+                            trigger.Release();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // this can happen in cases when the semaphore is signaled after our CurrentCount check (race condition)
+                        // (e.g.: when the events are added faster than they are read and sent to the queue)
+                        // This is OK because the other thread will have to read anyway all the lines that are available in the file.
+                    }
                 };
 
                 while (!ct.IsCancellationRequested)
@@ -89,7 +103,7 @@ namespace LogReader.Implementations
                     await trigger.WaitAsync(ct);
                     readLine = await sr.ReadLineAsync();
 
-                    // Console.WriteLine(readLine); // Debug
+                    _logger.LogTrace("Read from file: " + readLine);
 
                     // Depending on the implementation of the generator of data, we might get multiple notifications 
                     if (!string.IsNullOrWhiteSpace(readLine))

@@ -47,7 +47,7 @@ namespace LogReader.Implementations
                     IpAddress = ipAddress,
                     ClientIdentity = clientIdentity,
                     UserId = userId,
-                    Time = time,
+                    Time = time.ToUniversalTime(),
                     HttpMethod = httpMethod,
                     HttpPath = httpPath,
                     HttpVersion = httpVersion,
