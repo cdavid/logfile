@@ -82,7 +82,7 @@ namespace LogReader
 
             // The services that will do the work
             ILogParser logParser = new CommonLogParser();
-            IReportGenerator reportGenerator = new TenSecondTwoMinuteReportGenerator();
+            IReportGenerator reportGenerator = new TenSecondTwoMinuteReportGenerator(LoggerFactory.CreateLogger<TenSecondTwoMinuteReportGenerator>());
 
             // Setting up the TPL Dataflow
             var bufferBlock = new BufferBlock<Tuple<string, DateTime>>();

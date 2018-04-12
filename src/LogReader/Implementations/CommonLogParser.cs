@@ -34,7 +34,7 @@ namespace LogReader.Implementations
                 string clientIdentity = matches[0].Groups[2].Value;
                 string userId = matches[0].Groups[3].Value;
                 string timeString = matches[0].Groups[4].Value;
-                DateTime time = DateTime.ParseExact(timeString, "d/MMM/yyyy:hh:mm:ss zz00", null);
+                DateTime time = DateTime.ParseExact(timeString, "d/MMM/yyyy:HH:mm:ss zz00", null);
 
                 string httpMethod = matches[0].Groups[5].Value;
                 string httpPath = matches[0].Groups[6].Value;

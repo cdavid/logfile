@@ -17,28 +17,28 @@ namespace LogReader.Implementations
     /// at 10 second / 2 minute intervals.
     /// 
     /// Internally, the functionality is split into two items:
-    /// * we do a sliding time window for the 10 second report
-    /// * we do another sliding time window for the 2 minute alert
+    /// * we do a sliding time window for the 10 second report (GenerateSummaryReport)
+    /// * we do another sliding time window for the 2 minute alert (GenerateAlertReport)
     /// 
     /// To generate the sliding time windows, we make use of a concurrent queue (one for each).
     /// Thus, the file-reading thread can keep adding items while we generate the reports.
     /// </summary>
     public class TenSecondTwoMinuteReportGenerator : IReportGenerator
     {
-        const int tenSecondInterval = 10;
-        const int twoMinuteInterval = 2;
-        const int ALERT_NUMBER = 10;
+        public const int tenSecondInterval = 10;
+        public const int twoMinuteInterval = 2;
+        public const int ALERT_NUMBER = 10;
         const string Padding = "                       ";
 
-        private readonly ConcurrentQueue<DateTime> twoMinQueue;
-        private readonly ConcurrentQueue<LogEntity> tenSecondQueue;
-        private readonly ILogger _logger;
+        public readonly ConcurrentQueue<DateTime> twoMinQueue;
+        public readonly ConcurrentQueue<LogEntity> tenSecondQueue;
+        public ILogger _logger;
 
-        public TenSecondTwoMinuteReportGenerator()
+        public TenSecondTwoMinuteReportGenerator(ILogger logger)
         {
             tenSecondQueue = new ConcurrentQueue<LogEntity>();
             twoMinQueue = new ConcurrentQueue<DateTime>();
-            _logger = Program.LoggerFactory.CreateLogger<TenSecondTwoMinuteReportGenerator>();
+            _logger = logger;
         }
 
         /// <summary>
@@ -127,16 +127,24 @@ namespace LogReader.Implementations
                 $"removed={elementsRemoved} new={newElements}\r\n" +
                 $"prevInterval={previousInterval}, current={timeMax}\r\n");
 
+            if (previousTwoMinuteElementCount >= ALERT_NUMBER &&
+                count < ALERT_NUMBER)
+            {
+                _logger.LogWarning("The 2 minute alert has recovered...");
+            }
+
             previousTwoMinuteElementCount = count;
 
-            if (count > ALERT_NUMBER)
+            if (count >= ALERT_NUMBER)
             {
                 _logger.LogCritical(
                     "===============================\r\n" +
-                    "| ALERT ALERT ALERT!!!        |\r\n" +
-                    "| Events in past 2 mins: {0,5}|\r\n" +
+                    "| High traffic generated an   |\r\n" +
+                    "| alert - hits = {0,5}        |\r\n" +
+                    "| triggered at time {1}       |\r\n" +
                     "===============================\r\n",
-                    count
+                    count,
+                    DateTime.UtcNow
                     );
             }
 

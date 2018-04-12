@@ -27,7 +27,7 @@ namespace Shared
                 IpAddress,
                 ClientIdentity,
                 UserId,
-                Time.ToString("d/MMM/yyyy:hh:mm:ss zz00"),
+                Time.ToString("d/MMM/yyyy:HH:mm:ss zz00"),
                 HttpMethod,
                 HttpPath,
                 HttpVersion,
